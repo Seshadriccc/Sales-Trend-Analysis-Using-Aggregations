@@ -1,34 +1,46 @@
+from __future__ import annotations
+
 import sqlite3
-import pandas as pd
-import matplotlib.pyplot as plt
+from pathlib import Path
 
-# Connect to the existing database
-conn = sqlite3.connect('sales_data.db')
+DATABASE_PATH = Path("sales_data.db")
 
-# SQL query to get total quantity and revenue
-query = '''
-SELECT product, 
-       SUM(quantity) AS total_qty, 
-       SUM(quantity * price) AS revenue
-FROM sales
-GROUP BY product
-'''
+SAMPLE_DATA: list[tuple[str, int, float]] = [
+    ("Pen", 10, 5.0),
+    ("Notebook", 5, 15.0),
+    ("Pencil", 20, 2.5),
+    ("Pen", 7, 5.0),
+    ("Notebook", 3, 15.0),
+    ("Pencil", 10, 2.5),
+]
 
-# Load data into pandas DataFrame
-df = pd.read_sql_query(query, conn)
 
-# Display summary
-print("=== SALES SUMMARY ===")
-print(df)
+def initialize_database(db_path: Path = DATABASE_PATH) -> None:
+    with sqlite3.connect(db_path) as connection:
+        cursor = connection.cursor()
 
-# Plot revenue bar chart
-df.plot(kind='bar', x='product', y='revenue', legend=False)
-plt.title("Revenue by Product")
-plt.ylabel("Revenue")
-plt.xlabel("Product")
-plt.tight_layout()
-plt.savefig("sales_chart.png")  # Saves the chart as an image
-plt.show()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sales (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product TEXT NOT NULL,
+                quantity INTEGER NOT NULL,
+                price REAL NOT NULL
+            )
+            """
+        )
 
-# Close DB connection
-conn.close()
+        cursor.execute("DELETE FROM sales")
+        cursor.executemany(
+            "INSERT INTO sales (product, quantity, price) VALUES (?, ?, ?)",
+            SAMPLE_DATA,
+        )
+
+
+def main() -> None:
+    initialize_database()
+    print("Database initialized and sample sales records inserted.")
+
+
+if __name__ == "__main__":
+    main()
