@@ -1,32 +1,54 @@
+from __future__ import annotations
+
 import sqlite3
+from pathlib import Path
 
-# Connect to or create the database
-conn = sqlite3.connect('sales_data.db')
-cursor = conn.cursor()
+import matplotlib.pyplot as plt
+import pandas as pd
 
-# Create sales table
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS sales (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    product TEXT NOT NULL,
-    quantity INTEGER NOT NULL,
-    price REAL NOT NULL
-)
-''')
+DATABASE_PATH = Path("sales_data.db")
+CHART_PATH = Path("sales_chart.png")
 
-# Insert data
-sample_data = [
-    ('Pen', 10, 5.0),
-    ('Notebook', 5, 15.0),
-    ('Pencil', 20, 2.5),
-    ('Pen', 7, 5.0),
-    ('Notebook', 3, 15.0),
-    ('Pencil', 10, 2.5)
-]
-cursor.executemany('INSERT INTO sales (product, quantity, price) VALUES (?, ?, ?)', sample_data)
 
-# Save and close
-conn.commit()
-conn.close()
+QUERY = """
+SELECT
+    product,
+    SUM(quantity) AS total_qty,
+    SUM(quantity * price) AS revenue
+FROM sales
+GROUP BY product
+ORDER BY revenue DESC
+"""
 
-print("Database created and data inserted successfully!")
+
+def fetch_sales_summary(db_path: Path = DATABASE_PATH) -> pd.DataFrame:
+    with sqlite3.connect(db_path) as connection:
+        return pd.read_sql_query(QUERY, connection)
+
+
+def create_revenue_chart(data: pd.DataFrame, output_file: Path = CHART_PATH) -> None:
+    ax = data.plot(kind="bar", x="product", y="revenue", legend=False, color="#2563eb")
+    ax.set_title("Revenue by Product")
+    ax.set_xlabel("Product")
+    ax.set_ylabel("Revenue")
+    plt.tight_layout()
+    plt.savefig(output_file)
+    plt.close()
+
+
+def main() -> None:
+    summary = fetch_sales_summary()
+
+    if summary.empty:
+        print("No sales data found. Run analyze_sales.py first.")
+        return
+
+    print("=== SALES SUMMARY ===")
+    print(summary.to_string(index=False))
+
+    create_revenue_chart(summary)
+    print(f"\nChart saved to: {CHART_PATH}")
+
+
+if __name__ == "__main__":
+    main()

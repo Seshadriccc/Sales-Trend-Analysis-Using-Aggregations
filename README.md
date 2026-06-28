@@ -1,63 +1,68 @@
-# 📊 Task 7 – Basic Sales Summary using SQLite and Python
+# Sales Trend Analysis Using Aggregations
 
-## 🧠 Objective
-To create a basic SQLite database and use Python with SQL to:
-- Summarize total quantity sold and revenue per product
-- Display the result using a bar chart
+A compact data-analysis project that demonstrates how to combine **SQLite + SQL aggregations + Python visualization** to produce a clean product-level sales summary.
 
----
+## Project Overview
 
-## 🧰 Tools & Libraries Used
+This repository contains two scripts:
+
+1. `analyze_sales.py` – creates/initializes the SQLite database and inserts sample sales data.
+2. `task7.py` – runs SQL aggregation queries, prints a tabular summary, and generates a revenue chart.
+
+## Tech Stack
+
 - Python 3
-- SQLite3 (built-in with Python)
-- pandas (for SQL data handling)
-- matplotlib (for bar chart visualization)
-- Visual Studio Code
+- SQLite (`sqlite3`)
+- pandas
+- matplotlib
 
----
+## Repository Structure
 
-## 📁 Project Files
+- `analyze_sales.py` – database initialization script
+- `task7.py` – sales summary and chart generation script
+- `sales_data.db` – SQLite database file
+- `sales_chart.png` – generated chart image
 
-| File Name         | Description                                      |
-|------------------|--------------------------------------------------|
-| `sales_data.db`   | SQLite database file containing sales data       |
-| `task7.py`        | Python script that creates DB, runs analysis     |
-| `sales_chart.png` | Bar chart of revenue by product (auto-generated)|
-| `README.md`       | Task explanation and instructions                |
+## Setup
 
----
+```bash
+python -m venv .venv
+source .venv/bin/activate   # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-## ⚙️ How It Works
+## How to Run
 
-### 🔹 Step 1: Database Creation (in `task7.py`)
-```python
-import sqlite3
+### 1) Initialize database
 
-# Connect to or create the database
-conn = sqlite3.connect('sales_data.db')
-cursor = conn.cursor()
+```bash
+python analyze_sales.py
+```
 
-# Create table
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS sales (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    product TEXT NOT NULL,
-    quantity INTEGER NOT NULL,
-    price REAL NOT NULL
-)
-''')
+### 2) Run analysis and generate chart
 
-# Insert sample data
-sample_data = [
-    ('Pen', 10, 5.0),
-    ('Notebook', 5, 15.0),
-    ('Pencil', 20, 2.5),
-    ('Pen', 7, 5.0),
-    ('Notebook', 3, 15.0),
-    ('Pencil', 10, 2.5)
-]
-cursor.executemany('INSERT INTO sales (product, quantity, price) VALUES (?, ?, ?)', sample_data)
+```bash
+python task7.py
+```
 
-conn.commit()
-conn.close()
-print("Database created and data inserted successfully!")
+## Output
+
+- Console summary of total quantity and revenue by product
+- `sales_chart.png` bar chart for product-wise revenue
+
+## SQL Aggregation Used
+
+```sql
+SELECT
+    product,
+    SUM(quantity) AS total_qty,
+    SUM(quantity * price) AS revenue
+FROM sales
+GROUP BY product
+ORDER BY revenue DESC;
+```
+
+## Notes
+
+- `task7.py` safely handles empty datasets and prompts for database initialization.
+- The scripts are intentionally small and beginner-friendly, while following clean structure and reusable function design.
